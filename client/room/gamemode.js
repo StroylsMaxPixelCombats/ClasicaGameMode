@@ -217,5 +217,104 @@ mainTimer.OnTimer.Add(function() {
 SetWaitingMode();
 
 // Состояние - игры:
+function SetWaitingMode() {
+	stateProp.value = WaitingStateValue;
+	Ui.GetContext().Hint.Value = "Ожидание, игроков...";
+	 if (GameMode.Parameters.GetBool("En")) {
+	Ui.GetCotext().Hint.Value = "
+	Spawns.GetContext().enable = false;
+	TeamsBalancer.IsAutoBalance = true;
+	mainTimer.Restart(WaitingModeSeconts);
+}
 
+function SetBuildMode() 
+{
+	stateProp.value = BuildModeStateValue;
+	Ui.GetContext().Hint.Value = "Hint/BuildBase";
+
+	var inventory = Inventory.GetContext();
+	inventory.Main.Value = false;
+	inventory.Secondary.Value = false;
+	inventory.Melee.Value = true;
+	inventory.Explosive.Value = false;
+	inventory.Build.Value = true;
+
+	mainTimer.Restart(BuildModeSeconds);
+	Spawns.GetContext().enable = true;
+	TeamsBalancer.IsAutoBalance = true; // âêë àâòîáàëàíñ äî íà÷àëà êàòêè
+	SpawnTeams();
+}
+function SetGameMode() 
+{
+	stateProp.value = GameStateValue;
+	Ui.GetContext().Hint.Value = "Hint/AttackEnemies";
+	winTeamIdProp.Value = null; // íèêòî íå âûèãðàë
+
+	var inventory = Inventory.GetContext();
+	if (GameMode.Parameters.GetBool("OnlyKnives")) {
+		inventory.Main.Value = false;
+		inventory.Secondary.Value = false;
+		inventory.Melee.Value = true;
+		inventory.Explosive.Value = false;
+		inventory.Build.Value = true;
+	} else {
+		inventory.Main.Value = true;
+		inventory.Secondary.Value = true;
+		inventory.Melee.Value = true;
+		inventory.Explosive.Value = true;
+		inventory.Build.Value = true;
+	}
+
+	mainTimer.Restart(GameModeSeconds);
+	Spawns.GetContext().Despawn();
+	Spawns.GetContext().RespawnEnable = false;
+	TeamsBalancer.IsAutoBalance = false;
+	TeamsBalancer.BalanceTeams();
+	SpawnTeams();
+}
+
+function StartEndOfGame(team) { // team=null òî íè÷üÿ
+	log.debug("win team="+team);
+	stateProp.value = EndOfGameStateValue;
+	if (team !== null) {
+		log.debug(1);
+		Ui.GetContext().Hint.Value = team + " wins!";
+		 var prop = team.Properties.Get(scoresProp);
+		 if (prop.Value == null) prop.Value = 1;
+		 else prop.Value = prop.Value + 1;
+	}
+	else Ui.GetContext().Hint.Value = "Hint/Draw";
+
+	mainTimer.Restart(EndGameSeconds);
+}
+function EndEndOfGame(){// êîíåö êîíöà ìàò÷à
+	if (winTeamIdProp.Value !== null) {
+		var team = Teams.Get(winTeamIdProp.Value);
+		var prop = team.Properties.Get(scoresProp);
+		if (prop.Value >= MaxScores) SetEndOfMatchMode();
+		else SetGameMode();
+	}
+	else SetGameMode();
+}
+
+function SetEndOfMatchMode() {
+	stateProp.value = EndOfMatchStateValue;
+	Ui.GetContext().Hint.Value = "Hint/EndOfMatch";
+
+	var context = Spawns.GetContext();
+	context.enable = false;
+	context.Despawn();
+	Game.GameOver(LeaderBoard.GetTeams());
+	mainTimer.Restart(EndOfMatchTime);
+}
+function RestartGame() {
+	Game.RestartGame();
+}
+
+function SpawnTeams() {
+	var e = Teams.GetEnumerator();
+	while (e.moveNext()) {
+		Spawns.GetContext(e.Current).Spawn();
+	}
+}
 
