@@ -1,7 +1,5 @@
 import { DisplayValueHeader } from 'pixel_combats/basic';
 import { Game, Players, Inventory, LeaderBoard, BuildBlocksSet, Teams, Damage, BreackGraph, Ui, Properties, GameMode, Spawns, Timers, TeamsBalancer, NewGame, NewGameVote } from 'pixel_combats/room';
-import * as Teams from './default_teams.js';
-import * as DefaultTimer from './default_timer.js';
 
 // Константы:
 var MaxScores = 5;
